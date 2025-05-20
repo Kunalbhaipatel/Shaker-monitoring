@@ -1,5 +1,5 @@
-streamlit
+fastapi
+uvicorn
 pandas
 numpy
-matplotlib
-altair
+python-multipart
