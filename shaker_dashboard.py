@@ -29,9 +29,11 @@ if uploaded_file:
     reset_life = st.sidebar.checkbox("Reset Shaker Life After Maintenance")
     failure_threshold = st.sidebar.slider("Failure Prediction Threshold (%)", 0, 100, 30)
 
+    # Always calculate SHAKER Output
+    df['SHAKER Output'] = df.get('SHAKER #1 (Units)', 0).fillna(0) + df.get('SHAKER #2 (Units)', 0).fillna(0)
+
     st.markdown("### 📊 Initial Visualization")
-    if 'SHAKER Output' in df.columns and 'Rate Of Penetration (ft_per_hr)' in df.columns:
-        df['SHAKER Output'] = df['SHAKER #1 (Units)'].fillna(0) + df['SHAKER #2 (Units)'].fillna(0)
+    if 'Rate Of Penetration (ft_per_hr)' in df.columns:
         df['G-Force Drop Alert'] = np.where(
             (df['SHAKER Output'] < df['SHAKER Output'].rolling(10, min_periods=1).mean()) &
             (df['Rate Of Penetration (ft_per_hr)'] > 0), "⚠️ Potential Drop", "✅ Normal")
@@ -54,6 +56,7 @@ if uploaded_file:
         df['Circulating Hours'] = df['Circulating Hours (hrs)'].fillna(method='ffill')
         df['Vibration Stress Index'] = (df['SHAKER Output'] / df['SHAKER Output'].max()).fillna(0)
         df['Thermal Factor'] = (df['tgs Box Temperature (deg_f)'] / 180).clip(0, 1).fillna(0)
+
         df['Shaker Life Used (%)'] = (
             0.5 * (df['Circulating Hours'] / 10000) +
             0.3 * df['Vibration Stress Index'] +
@@ -68,7 +71,7 @@ if uploaded_file:
 
         latest_util = df['Screen Utilization (%)'].iloc[-1]
         latest_life_rem = 100 - df['Screen Life Used (%)'].iloc[-1]
-        latest_alert = df['G-Force Drop Alert'].iloc[-1]
+        latest_alert = df['G-Force Drop Alert'].iloc[-1] if 'G-Force Drop Alert' in df.columns else "N/A"
         latest_shaker_life = df['Shaker Life Remaining (%)'].iloc[-1]
         shaker_status = "🟢 OK" if latest_shaker_life >= failure_threshold else "🔴 At Risk"
 
